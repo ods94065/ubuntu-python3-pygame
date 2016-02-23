@@ -1,0 +1,49 @@
+{
+  "_description": "This is a Packer template for building a Python3 pygame dev environment. It creates a desktop VM with Python3, pygame, Mercurial, and Git preinstalled.",
+  "variables": {
+    "name": "ubuntu-python3-pygame",
+    "build_version": "{{env `BUILD_VERSION`}}",
+    "atlas_user": "ods94065",
+    "atlas_token": "{{env `ATLAS_TOKEN`}}",
+    "base_vagrant_box_path": "{{env `BASE_VAGRANT_BOX_PATH`}}"
+  },
+  "builders": [
+    {
+      "name": "vbox",
+      "type": "virtualbox-ovf",
+      "source_path": "{{user `base_vagrant_box_path`}}",
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      "headless": true,
+      "ssh_wait_timeout": "30s",
+      "shutdown_command": "sudo shutdown -h now"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "install_python3_pygame"
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "vagrant",
+        "output": "{{user `name`}}-{{.BuildName}}.box",
+        "vagrantfile_template": "Vagrantfile.template"
+      },
+      {
+        "type": "atlas",
+        "only": ["vbox"],
+        "token": "{{user `atlas_token`}}",
+        "artifact": "{{user `atlas_user`}}/{{user `name`}}",
+        "artifact_type": "vagrant.box",
+        "metadata": {
+          "version": "{{user `build_version`}}",
+          "provider": "virtualbox",
+          "created_at": "{{timestamp}}"
+        }
+      }
+    ]
+  ]
+}
